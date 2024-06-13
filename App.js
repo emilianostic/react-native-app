@@ -1,12 +1,13 @@
 import React from "react";
 import { Text, View, StyleSheet, Image } from "react-native"; //etiqueta <p> o similar
 //View = DIV, Image Textinput ScrollView Stylsheet
+import image from "./assets/cantera.png"
 
 const App = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Hola</Text>
-      <Image source={{uri:"https://picsum.photos/200/200"}}
+      <Image source={image}
       style={styles.image}/>
     </View>
   );
