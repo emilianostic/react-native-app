@@ -4,13 +4,15 @@ import {
   View,
   StyleSheet,
   Image,
-  TouchableOpacity,
-  /* Button */ Alert,
+  Pressable,
+  Platform
+  /* Button */ 
 } from "react-native"; //etiqueta <p> o similar
 //View = DIV, Image Textinput ScrollView Stylsheet Button
 //import image from "./assets/cantera.png";
 import * as ImagePicker from "expo-image-picker";
-import * as Sharing from "expo-sharing"
+import * as Sharing from "expo-sharing";
+import uploadToAnonymousFilesAsync from "anonymous-files";
 /* const handleOnPress = ()=>{
   return window.alert("presionaste")
 } */
@@ -19,36 +21,58 @@ const App = () => {
   const [selectedImage, setSelectedImage] = useState(null);
 
   let openImagePickerAsync = async () => {
-    let permissionResult =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const permissionResult =
+      await ImagePicker.requestCameraPermissionsAsync();
     if (permissionResult.granted === false) {
-      alert("Permios para acceder a la cámara son requeridos");
+      alert("Permisos para acceder a la cámara son requeridos");
       return;
     }
     const pickerResult = await ImagePicker.launchImageLibraryAsync();
     if (pickerResult.canceled === true) {
       return;
     }
-    setSelectedImage({ localUri: pickerResult.uri });
+
+    if(Platform.OS ==="web") {
+     const remoteUri =  await uploadToAnonymousFilesAsync(pickerResult.uri)
+ 
+     setSelectedImage({localUri: pickerResult.uri, remoteUri})
+
+    }else{
+      setSelectedImage({ localUri: pickerResult.uri });
+    }
+    
+  };
+
+
+  const openShareDialog = async () => {
+    if (!(await Sharing.isAvailableAsync())) {
+      alert(`Te image is available for sharing at: ${selectedImage.remoteUri}`);
+      return;
+    }
+    await Sharing.shareAsync(selectedImage.localUri);
   };
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Elige una imagen</Text>
-      <TouchableOpacity
-      onPress={openImagePickerAsync}>
-      <Image
-        source={{
-          uri:
-            selectedImage !== null
-              ? selectedImage.localUri
-              : "https://picsum.photos/200/200",
-        }}
-        style={styles.image}
-      />
-      </TouchableOpacity>
-      <TouchableOpacity onPress={()=>{console.log("hola")}} style={styles.button}>
-        <Text style={styles.buttonText}>Press Here</Text>
-      </TouchableOpacity>
+      <Pressable onPress={openImagePickerAsync}>
+        <Image
+          source={{
+            uri:
+              selectedImage !== null
+                ? selectedImage.localUri
+                : "https://picsum.photos/200/300",
+          }}
+          style={styles.image}
+        />
+      </Pressable>
+
+      {selectedImage ? (
+        <Pressable onPress={openShareDialog} style={styles.button}>
+          <Text style={styles.buttonText}>Compartir imagen</Text>
+        </Pressable>
+      ) : (
+        <View />
+      )}
     </View>
   );
 };
@@ -60,7 +84,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#292929",
   },
   title: { fontSize: 30, color: "#fff" },
-  image: { height: 200, width: 200, borderRadius: 100, resizeMode: "contain" },
+  image: { height: 200, width: 200, borderRadius: 100, /* resizeMode: "contain"  */},
   button: {
     alignItems: "center",
     backgroundColor: "blue",
